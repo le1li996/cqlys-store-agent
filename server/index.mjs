@@ -177,7 +177,8 @@ app.post('/api/auth/register', async (req, res) => {
 
   const emailKey = email.toLowerCase()
   const rec = await db.findCodeByEmail(emailKey)
-  if (!rec || rec.expiresAt < Date.now()) return res.status(400).json({ ok: false, error: '验证码已过期，请重新获取' })
+  if (!rec) return res.status(400).json({ ok: false, error: '验证码不存在，请重新获取' })
+  if (rec.expiresAt < Date.now()) return res.status(400).json({ ok: false, error: '验证码已过期，请重新获取' })
   if (rec.code !== code) return res.status(400).json({ ok: false, error: '验证码不正确' })
 
   const existing = await db.findUserByPhone(phone)

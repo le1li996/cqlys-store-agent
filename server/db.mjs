@@ -126,9 +126,13 @@ export const db = {
   async findCodeByEmail(email) {
     if (useSupabase()) {
       const sb = await getSupabase()
-      const { data } = await sb.from('codes').select('*').eq('email', email).order('expires_at', { ascending: false }).limit(1)
+      const { data, error } = await sb.from('codes').select('*').eq('email', email).order('expires_at', { ascending: false }).limit(1)
+      if (error) { console.error('[DB] findCode error:', error.message); return null }
       if (!data || !data[0]) return null
-      return { email: data[0].email, code: data[0].code, expiresAt: data[0].expires_at }
+      // expires_at 可能是 ISO 字符串或数字，统一处理
+      const raw = data[0].expires_at
+      const expiresAt = raw ? new Date(raw).getTime() : 0
+      return { email: data[0].email, code: data[0].code, expiresAt }
     }
     const db = jsonRead()
     return db.codes.find((c) => c.email === email) || null
@@ -137,9 +141,16 @@ export const db = {
   async upsertCode(email, code, expiresAt) {
     if (useSupabase()) {
       const sb = await getSupabase()
-      // 先删除旧记录，防止重复数据导致查询返回过期记录
-      await sb.from('codes').delete().eq('email', email)
-      await sb.from('codes').insert({ email, code, expires_at: expiresAt })
+      // 先删除旧记录
+      const { error: delErr } = await sb.from('codes').delete().eq('email', email)
+      if (delErr) console.error('[DB] delete code error:', delErr.message)
+      // 使用 ISO 字符串存储，兼容 TIMESTAMPTZ / TIMESTAMP / TEXT
+      const iso = new Date(expiresAt).toISOString()
+      const { error: insErr } = await sb.from('codes').insert({ email, code, expires_at: iso })
+      if (insErr) {
+        console.error('[DB] insert code error:', insErr.message, insErr.details)
+        throw new Error('验证码存储失败: ' + insErr.message)
+      }
       return
     }
     const db = jsonRead()

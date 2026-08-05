@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS tokens (
 CREATE TABLE IF NOT EXISTS codes (
   email       TEXT PRIMARY KEY,
   code        TEXT NOT NULL,
-  expires_at  BIGINT NOT NULL
+  expires_at  TIMESTAMPTZ NOT NULL
 );
 
 -- 文件元数据表
@@ -62,3 +62,5 @@ CREATE INDEX IF NOT EXISTS idx_files_owner_id ON files(owner_id);
 -- UPDATE codes SET email = phone WHERE email IS NULL;
 -- ALTER TABLE codes DROP COLUMN IF EXISTS phone;
 -- ALTER TABLE codes ADD PRIMARY KEY (email);
+-- ALTER TABLE codes ALTER COLUMN expires_at TYPE TIMESTAMPTZ USING to_timestamp(expires_at/1000);
+-- TRUNCATE TABLE codes;
