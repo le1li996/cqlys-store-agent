@@ -150,7 +150,7 @@ app.get('/api/health', (req, res) => res.json({
   ok: true, mail: mailer.ready, db: db.mode, storage: storage.mode,
 }))
 
-// —— 发送验证码（邮箱）——
+// —— 发送验证码（页面显示，10秒后自动展示）——
 app.post('/api/auth/send-code', async (req, res) => {
   const { email } = req.body || {}
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -163,12 +163,8 @@ app.post('/api/auth/send-code', async (req, res) => {
   }
   const code = genCode()
   await db.upsertCode(email.toLowerCase(), code, Date.now() + 5 * 60 * 1000)
-  const r = await mailer.sendCode(email, code)
-  if (!r.ok) {
-    console.log(`[Dev-Fallback] 验证码（${email}）：${code}`)
-    return res.json({ ok: true, devCode: code })
-  }
-  res.json({ ok: true })
+  console.log(`[Code] 验证码（${email}）：${code}`)
+  res.json({ ok: true, devCode: code })
 })
 
 // —— 注册（手机号 + 邮箱 + 企业名称 + 验证码 + 密码）——

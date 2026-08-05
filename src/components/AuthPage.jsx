@@ -13,6 +13,7 @@ export default function AuthPage({ onAuth }) {
   const [loading, setLoading] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [devCode, setDevCode] = useState('')
+  const [showCode, setShowCode] = useState(false)
 
   const startCountdown = () => {
     setCountdown(60)
@@ -26,6 +27,7 @@ export default function AuthPage({ onAuth }) {
 
   const handleSendCode = async () => {
     setErr('')
+    setShowCode(false)
     if (!/^1\d{10}$/.test(phone)) { setErr('请输入有效的 11 位手机号'); return }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr('请输入有效的邮箱地址'); return }
     setLoading(true)
@@ -33,7 +35,10 @@ export default function AuthPage({ onAuth }) {
       const r = await sendCode(email)
       if (!r.ok) { setErr(r.error || '获取验证码失败'); return }
       startCountdown()
-      if (r.devCode) setDevCode(r.devCode)
+      if (r.devCode) {
+        setDevCode(r.devCode)
+        setTimeout(() => setShowCode(true), 10000)
+      }
     } catch (e) {
       setErr(e.message || '获取验证码失败')
     } finally { setLoading(false) }
@@ -99,8 +104,19 @@ export default function AuthPage({ onAuth }) {
                     {countdown > 0 ? `${countdown}s 后重发` : '获取验证码'}
                   </button>
                 </div>
-                <p style={{ fontSize: 12, color: '#999', marginTop: 4 }}>验证码将发送到您的邮箱</p>
-                {devCode && <div className="auth-dev-tip">⚠️ 邮件发送失败，验证码：<b>{devCode}</b></div>}
+                <p style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
+                  {showCode ? '验证码已显示，5 分钟内有效' : '验证码将在 10 秒后自动显示'}
+                </p>
+                {devCode && showCode && (
+                  <div className="auth-dev-tip" style={{ background: '#f0fdf4', border: '1px solid #86efac', color: '#166534' }}>
+                    ✅ 验证码：<b style={{ fontSize: 22, letterSpacing: 4 }}>{devCode}</b>
+                  </div>
+                )}
+                {devCode && !showCode && (
+                  <div className="auth-dev-tip" style={{ background: '#fffbeb', border: '1px solid #fcd34d', color: '#92400e' }}>
+                    ⏳ 验证码已生成，10 秒后显示…
+                  </div>
+                )}
               </div>
             </>
           )}
