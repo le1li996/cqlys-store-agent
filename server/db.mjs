@@ -126,7 +126,7 @@ export const db = {
   async findCodeByEmail(email) {
     if (useSupabase()) {
       const sb = await getSupabase()
-      const { data } = await sb.from('codes').select('*').eq('email', email).limit(1)
+      const { data } = await sb.from('codes').select('*').eq('email', email).order('expires_at', { ascending: false }).limit(1)
       if (!data || !data[0]) return null
       return { email: data[0].email, code: data[0].code, expiresAt: data[0].expires_at }
     }
@@ -137,7 +137,9 @@ export const db = {
   async upsertCode(email, code, expiresAt) {
     if (useSupabase()) {
       const sb = await getSupabase()
-      await sb.from('codes').upsert({ email, code, expires_at: expiresAt }, { onConflict: 'email' })
+      // 先删除旧记录，防止重复数据导致查询返回过期记录
+      await sb.from('codes').delete().eq('email', email)
+      await sb.from('codes').insert({ email, code, expires_at: expiresAt })
       return
     }
     const db = jsonRead()
