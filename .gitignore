@@ -1,0 +1,28 @@
+# 依赖
+node_modules/
+
+# 构建产物（部署时由 npm start 的 prestart 自动生成；本地可保留）
+dist/
+
+# vite 缓存
+/tmp/cqlys-vite-cache/
+
+# 运行期数据（用户注册/上传文件，属敏感运行时产物，不入库）
+server/db.json
+server/uploads/*
+!server/uploads/.gitkeep
+
+# 本地环境变量（含密钥，禁止提交）
+.env
+.env.local
+
+# 日志
+*.log
+
+# 系统/编辑器
+.DS_Store
+.idea/
+.vscode/
+.workbuddy/
+server/.env.supabase
+_push*.py

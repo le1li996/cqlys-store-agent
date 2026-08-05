@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: store-analytics-agent
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: node server/index.mjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SMS_PROVIDER
+        value: dev
+      - key: PORT
+        value: "10000"
