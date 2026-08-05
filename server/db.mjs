@@ -141,15 +141,15 @@ export const db = {
   async upsertCode(email, code, expiresAt) {
     if (useSupabase()) {
       const sb = await getSupabase()
-      // 先删除旧记录
-      const { error: delErr } = await sb.from('codes').delete().eq('email', email)
-      if (delErr) console.error('[DB] delete code error:', delErr.message)
-      // expires_at 传数字毫秒时间戳（兼容 BIGINT / TIMESTAMPTZ）
-      const { error: insErr } = await sb.from('codes').insert({ email, code, expires_at: expiresAt })
-      if (insErr) {
-        console.error('[DB] insert code error:', insErr.message, insErr.details)
-        throw new Error('验证码存储失败: ' + insErr.message)
+      // 用 upsert 代替 delete+insert，email 是主键会自动覆盖
+      const payload = { email, code, expires_at: expiresAt }
+      const { error: upErr } = await sb.from('codes').upsert(payload, { onConflict: 'email' })
+      if (upErr) {
+        console.error('[DB] upsert code FAILED:', JSON.stringify(upErr))
+        console.error('[DB] payload was:', JSON.stringify({ email, code, expires_at: expiresAt }))
+        throw new Error('验证码存储失败: ' + (upErr.message || '未知错误'))
       }
+      console.log('[DB] code saved:', email, 'expires:', new Date(expiresAt).toISOString())
       return
     }
     const db = jsonRead()
