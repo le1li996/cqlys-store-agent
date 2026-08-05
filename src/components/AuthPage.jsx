@@ -104,16 +104,13 @@ export default function AuthPage({ onAuth }) {
                     {countdown > 0 ? `${countdown}s 后重发` : '获取验证码'}
                   </button>
                 </div>
-                <p style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
-                  {showCode ? '验证码已显示，5 分钟内有效' : '验证码将在 10 秒后自动显示'}
-                </p>
                 {devCode && showCode && (
-                  <div className="auth-dev-tip" style={{ background: '#f0fdf4', border: '1px solid #86efac', color: '#166534' }}>
+                  <div className="auth-dev-tip" style={{ background: '#f0fdf4', border: '1px solid #86efac', color: '#166534', marginTop: 4 }}>
                     ✅ 验证码：<b style={{ fontSize: 22, letterSpacing: 4 }}>{devCode}</b>
                   </div>
                 )}
                 {devCode && !showCode && (
-                  <div className="auth-dev-tip" style={{ background: '#fffbeb', border: '1px solid #fcd34d', color: '#92400e' }}>
+                  <div className="auth-dev-tip" style={{ background: '#fffbeb', border: '1px solid #fcd34d', color: '#92400e', marginTop: 4 }}>
                     ⏳ 验证码已生成，10 秒后显示…
                   </div>
                 )}
