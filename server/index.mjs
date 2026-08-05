@@ -152,19 +152,24 @@ app.get('/api/health', (req, res) => res.json({
 
 // —— 发送验证码（页面显示，10秒后自动展示）——
 app.post('/api/auth/send-code', async (req, res) => {
-  const { email } = req.body || {}
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return res.status(400).json({ ok: false, error: '请输入有效的邮箱地址' })
+  try {
+    const { email } = req.body || {}
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ ok: false, error: '请输入有效的邮箱地址' })
+    }
+    const existing = await db.findCodeByEmail(email.toLowerCase())
+    if (existing && existing.expiresAt > Date.now()) {
+      const wait = Math.ceil((existing.expiresAt - Date.now()) / 1000)
+      return res.status(429).json({ ok: false, error: `请 ${wait}s 后再获取验证码` })
+    }
+    const code = genCode()
+    await db.upsertCode(email.toLowerCase(), code, Date.now() + 5 * 60 * 1000)
+    console.log(`[Code] 验证码（${email}）：${code}`)
+    res.json({ ok: true, devCode: code })
+  } catch (e) {
+    console.error('[SendCode] 异常:', e.message)
+    res.status(500).json({ ok: false, error: '服务器内部错误，请稍后重试' })
   }
-  const existing = await db.findCodeByEmail(email.toLowerCase())
-  if (existing && existing.expiresAt > Date.now()) {
-    const wait = Math.ceil((existing.expiresAt - Date.now()) / 1000)
-    return res.status(429).json({ ok: false, error: `请 ${wait}s 后再获取验证码` })
-  }
-  const code = genCode()
-  await db.upsertCode(email.toLowerCase(), code, Date.now() + 5 * 60 * 1000)
-  console.log(`[Code] 验证码（${email}）：${code}`)
-  res.json({ ok: true, devCode: code })
 })
 
 // —— 注册（手机号 + 邮箱 + 企业名称 + 验证码 + 密码）——

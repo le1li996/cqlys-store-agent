@@ -144,9 +144,8 @@ export const db = {
       // 先删除旧记录
       const { error: delErr } = await sb.from('codes').delete().eq('email', email)
       if (delErr) console.error('[DB] delete code error:', delErr.message)
-      // 使用 ISO 字符串存储，兼容 TIMESTAMPTZ / TIMESTAMP / TEXT
-      const iso = new Date(expiresAt).toISOString()
-      const { error: insErr } = await sb.from('codes').insert({ email, code, expires_at: iso })
+      // expires_at 传数字毫秒时间戳（兼容 BIGINT / TIMESTAMPTZ）
+      const { error: insErr } = await sb.from('codes').insert({ email, code, expires_at: expiresAt })
       if (insErr) {
         console.error('[DB] insert code error:', insErr.message, insErr.details)
         throw new Error('验证码存储失败: ' + insErr.message)
